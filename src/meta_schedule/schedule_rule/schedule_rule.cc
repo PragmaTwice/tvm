@@ -357,7 +357,7 @@ Array<ScheduleRule> GetARMDotprodSpecificRules() {
 }
 
 Array<ScheduleRule> ScheduleRule::DefaultARM(const String& type) {
-  return Array<ScheduleRule>::Agregate(
+  return Array<ScheduleRule>::Aggregate(
       ScheduleRule::ApplyCustomRule(), ScheduleRule::InlineConstantScalars(),
       ScheduleRule::AutoInline(
           /*into_producer=*/false,

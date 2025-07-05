@@ -515,6 +515,11 @@ class Array : public ObjectRef {
     p->EmplaceInit(p->size_++, item);
   }
 
+  void push_back(T&& item) {
+    ArrayObj* p = CopyOnWrite(1);
+    p->EmplaceInit(p->size_++, std::move(item));
+  }
+
   template <typename... Args>
   void emplace_back(Args&&... args) {
     ArrayObj* p = CopyOnWrite(1);
@@ -661,34 +666,16 @@ class Array : public ObjectRef {
     }
   }
 
-  template <typename... Args>
-  static size_t CalcCapacityImpl() {
-    return 0;
-  }
+  static size_t CalcCapacityImpl(const Array<T>& value) { return value.size(); }
 
-  template <typename... Args>
-  static size_t CalcCapacityImpl(Array<T> value, Args... args) {
-    return value.size() + CalcCapacityImpl(args...);
-  }
+  static size_t CalcCapacityImpl(const T& value) { return 1; }
 
-  template <typename... Args>
-  static size_t CalcCapacityImpl(T value, Args... args) {
-    return 1 + CalcCapacityImpl(args...);
-  }
-
-  template <typename... Args>
-  static void AgregateImpl(Array<T>& dest) {}  // NOLINT(*)
-
-  template <typename... Args>
-  static void AgregateImpl(Array<T>& dest, Array<T> value, Args... args) {  // NOLINT(*)
+  static void AggregateImpl(Array<T>& dest, Array<T> value) {  // NOLINT(*)
     dest.insert(dest.end(), value.begin(), value.end());
-    AgregateImpl(dest, args...);
   }
 
-  template <typename... Args>
-  static void AgregateImpl(Array<T>& dest, T value, Args... args) {  // NOLINT(*)
-    dest.push_back(value);
-    AgregateImpl(dest, args...);
+  static void AggregateImpl(Array<T>& dest, T value) {  // NOLINT(*)
+    dest.push_back(std::move(value));
   }
 
  public:
@@ -795,15 +782,15 @@ class Array : public ObjectRef {
   using ContainerType = ArrayObj;
 
   /*!
-   * \brief Agregate arguments into a single Array<T>
+   * \brief Aggregate arguments into a single Array<T>
    * \param args sequence of T or Array<T> elements
-   * \return Agregated Array<T>
+   * \return Aggregated Array<T>
    */
   template <typename... Args>
-  static Array<T> Agregate(Args... args) {
+  static Array<T> Aggregate(Args... args) {
     Array<T> result;
-    result.reserve(CalcCapacityImpl(args...));
-    AgregateImpl(result, args...);
+    result.reserve((CalcCapacityImpl(args) + ... + 0));
+    (AggregateImpl(result, args), ...);
     return result;
   }
 
