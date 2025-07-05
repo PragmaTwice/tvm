@@ -37,7 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          submodules: "recursive"
+          submodules: false
       - name: Add cc'ed reviewers
         env:
           PR: ${{ toJson(github.event.pull_request) }}
